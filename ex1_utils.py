@@ -92,7 +92,6 @@ def hsitogramEqualize(imgOrig: np.ndarray) -> (np.ndarray, np.ndarray, np.ndarra
     imgOrig_temp = imgOrig_temp * 255
     org_hist, bin_edges = np.histogram(imgOrig_temp.ravel(), bins=256, range=[0, 255])
     hist_cumsum = np.cumsum(org_hist)
-    # lut = hist_cumsum / max(org_hist) * 255
     lut = hist_cumsum / len(imgOrig_temp.ravel()) * 255
     lutimg = cv2.LUT(imgOrig_temp.astype('uint8'), lut.astype('uint8'))
     img_eq = lutimg
@@ -106,24 +105,23 @@ def hsitogramEqualize(imgOrig: np.ndarray) -> (np.ndarray, np.ndarray, np.ndarra
     return img_eq, org_hist, eq_hist
 
 
+#The idea of this code is taken is taken from the following URL:
+# https://github.com/ido1Shapira/Image_Processing_ex1/blob/master/ex1_utils.py
 def quantizeImage(imOrig: np.ndarray, nQuant: int, nIter: int) -> (List[np.ndarray], List[float]):
     if len(imOrig.shape) != 2:
         im_yiq = transformRGB2YIQ(imOrig.copy())
-        im_y = im_yiq[..., 0].copy()  # take only the y chanel
+        im_y = im_yiq[..., 0].copy()
     else:
         im_y = imOrig
     histOrig, bins_edge = np.histogram(im_y.ravel(), bins=256)
     Z, Q = findCenters(histOrig, nQuant, nIter)
-    # quantize_image_history = [imOrig.copy()]
     quantize_image_history = []
     error_list = []
     for i in np.arange(len(Z)):
-        # arrayQuantize = np.array([Q[i][k] for k in np.arange(len(Q[i])) for x in np.arange(Z[i][k], Z[i][k + 1])])
         arrayQuantize = []
         for k in np.arange(len(Q[i])):
             for x in np.arange(Z[i][k], Z[i][k + 1]):
                 arrayQuantize.append(Q[i][k])
-        # q_img, error = convertToImg(im_y, histOrig, im_yiq if len(imOrig.shape) == 3 else [], arrayQuantize)
         if len(imOrig.shape) == 3:
             q_img, error = convertToImg(im_y, histOrig, im_yiq, arrayQuantize)
         else:
@@ -135,7 +133,6 @@ def quantizeImage(imOrig: np.ndarray, nQuant: int, nIter: int) -> (List[np.ndarr
 
 
 def find_new_q(z: np.array, image_hist: np.ndarray) -> np.ndarray:
-    # q = [np.average(np.arange(z[k], z[k + 1] + 1), weights=image_hist[z[k]: z[k + 1] + 1]) for k in range(len(z) - 1)]
     q = []
     for index in np.arange(len(z)-1):
         q.append(np.average(np.arange(z[index], z[index + 1] + 1), weights=image_hist[z[index]: z[index + 1] + 1]))
@@ -143,7 +140,6 @@ def find_new_q(z: np.array, image_hist: np.ndarray) -> np.ndarray:
 
 
 def find_new_z(q: np.array) -> np.array:
-    # z = np.array([round((q[i - 1] + q[i]) / 2) for i in range(1, len(q))]).astype(int)
     z = []
     for index in np.arange(1, len(q)):
         z.append(round((q[index - 1] + q[index]) / 2))
@@ -154,10 +150,7 @@ def find_new_z(q: np.array) -> np.array:
 
 
 def findCenters(orig_hist: np.ndarray, num_colors: int, n_iter: int) -> (np.ndarray, np.ndarray):
-    # z_list = []
-    # q_list = []
     z_list, q_list = [], []
-    # z = np.arange(0, 256, round(256 / num_colors))
     z = np.arange(0, 256, 256 // num_colors)
     z = np.append(z, [255])
     z_copy = z.copy()
@@ -183,7 +176,7 @@ def convertToImg(imOrig: np.ndarray, histOrig: np.ndarray, yiq_im: np.ndarray, a
     curr_hist, bins = np.histogram(quantized_img, bins=256)
     err = np.sqrt(np.sum((histOrig.astype('float') - curr_hist.astype('float')) ** 2)) / float(
         imOrig.shape[0] * imOrig.shape[1])
-    if len(yiq_im):  # if the original image is RGB
+    if len(yiq_im):
         yiq_im[:, :, 0] = quantized_img / 255
         return transformYIQ2RGB(yiq_im), err
     return quantized_img, err

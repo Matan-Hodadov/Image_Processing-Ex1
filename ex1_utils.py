@@ -114,11 +114,20 @@ def quantizeImage(imOrig: np.ndarray, nQuant: int, nIter: int) -> (List[np.ndarr
         im_y = imOrig
     histOrig, bins_edge = np.histogram(im_y.ravel(), bins=256)
     Z, Q = findCenters(histOrig, nQuant, nIter)
-    quantize_image_history = [imOrig.copy()]
+    # quantize_image_history = [imOrig.copy()]
+    quantize_image_history = []
     error_list = []
     for i in np.arange(len(Z)):
-        arrayQuantize = np.array([Q[i][k] for k in np.arange(len(Q[i])) for x in np.arange(Z[i][k], Z[i][k + 1])])
-        q_img, error = convertToImg(im_y, histOrig, im_yiq if len(imOrig.shape) == 3 else [], arrayQuantize)
+        # arrayQuantize = np.array([Q[i][k] for k in np.arange(len(Q[i])) for x in np.arange(Z[i][k], Z[i][k + 1])])
+        arrayQuantize = []
+        for k in np.arange(len(Q[i])):
+            for x in np.arange(Z[i][k], Z[i][k + 1]):
+                arrayQuantize.append(Q[i][k])
+        # q_img, error = convertToImg(im_y, histOrig, im_yiq if len(imOrig.shape) == 3 else [], arrayQuantize)
+        if len(imOrig.shape) == 3:
+            q_img, error = convertToImg(im_y, histOrig, im_yiq, arrayQuantize)
+        else:
+            q_img, error = convertToImg(im_y, histOrig, np.ndarray, arrayQuantize)
         quantize_image_history.append(q_img)
         error_list.append(error)
 
